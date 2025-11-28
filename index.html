@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아인병원 AIN365 시설관리 대시보드</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="container">
+            <h1><i class="fas fa-hospital"></i> 아인병원 AIN365 시설관리</h1>
+            <p id="currentDate"></p>
+            <p id="dataSource" style="margin-top: 10px;">
+                <i class="fas fa-spinner fa-spin"></i> <span>데이터 로딩 중...</span>
+            </p>
+            <button class="refresh-btn" onclick="refreshData()" style="margin-top: 15px;">
+                <i class="fas fa-sync-alt"></i> 새로고침
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- 메인 통계 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">전체 요청</div>
+                <div class="stat-number" id="totalRequests">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">완료</div>
+                <div class="stat-number" id="completedRequests" style="color: #38ef7d;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">진행중</div>
+                <div class="stat-number" id="inProgressRequests" style="color: #ffa502;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">대기중</div>
+                <div class="stat-number" id="pendingRequests" style="color: #95afc0;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">긴급 미처리</div>
+                <div class="stat-number" id="urgentRequests" style="color: #ff6348;">0</div>
+            </div>
+        </div>
+
+        <!-- 일일 통계 -->
+        <section class="charts-section">
+            <div class="section-header">
+                <h2><i class="fas fa-calendar-day"></i> 일일 통계</h2>
+                <input type="date" id="selectedDate" onchange="updateDailyStats(); createDailyChart();">
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+                <div class="stat-card">
+                    <div class="stat-label">총 요청</div>
+                    <div class="stat-number" id="dailyTotal">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">완료</div>
+                    <div class="stat-number" id="dailyCompleted" style="color: #38ef7d;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">평균 처리시간</div>
+                    <div class="stat-number" id="dailyAvgTime" style="font-size: 1.8em;">0일</div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </section>
+
+        <!-- 주간 통계 -->
+        <section class="charts-section">
+            <div class="section-header">
+                <h2><i class="fas fa-calendar-week"></i> 주간 통계</h2>
+                <div class="nav-controls">
+                    <button onclick="prevWeek()"><i class="fas fa-chevron-left"></i></button>
+                    <span id="weekRange" style="min-width: 120px; text-align: center;"></span>
+                    <button onclick="nextWeek()"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+                <div class="stat-card">
+                    <div class="stat-label">총 요청</div>
+                    <div class="stat-number" id="weeklyTotal">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">완료</div>
+                    <div class="stat-number" id="weeklyCompleted" style="color: #38ef7d;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">완료율</div>
+                    <div class="stat-number" id="weeklyRate" style="font-size: 1.8em;">0%</div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </section>
+
+        <!-- 월간 통계 -->
+        <section class="charts-section">
+            <div class="section-header">
+                <h2><i class="fas fa-calendar-alt"></i> 월간 통계 (2개월 비교)</h2>
+                <div class="nav-controls">
+                    <button onclick="prevMonth()"><i class="fas fa-chevron-left"></i></button>
+                    <span id="monthRange" style="min-width: 120px; text-align: center;"></span>
+                    <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+                <div class="stat-card">
+                    <div class="stat-label">첫 번째 달</div>
+                    <div class="stat-number" id="month1Total">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">두 번째 달</div>
+                    <div class="stat-number" id="month2Total">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">변화율</div>
+                    <div class="stat-number" id="monthlyDiff" style="font-size: 1.8em;">0%</div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </section>
+
+        <!-- 장기 미처리 항목 -->
+        <section class="charts-section">
+            <div class="section-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> 장기 미처리 항목 (3일 이상)</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+                <div class="stat-card">
+                    <div class="stat-label">총 미처리</div>
+                    <div class="stat-number" id="pendingTotal">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">긴급</div>
+                    <div class="stat-number" id="pendingUrgent" style="color: #ff6348;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">높음</div>
+                    <div class="stat-number" id="pendingHigh" style="color: #ffa502;">0</div>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>요청일</th>
+                        <th>공종</th>
+                        <th>층</th>
+                        <th>접수자</th>
+                        <th>부서</th>
+                        <th>상태</th>
+                        <th>우선순위</th>
+                        <th>지연일수</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingTableBody"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer class="dashboard-footer">
+        <div class="container">
+            <p>&copy; 2025 아인병원 AIN365 시설관리. All rights reserved.</p>
+            <p>마지막 업데이트: <span id="lastUpdate"></span></p>
+        </div>
+    </footer>
+
+    <script src="js/google-sheets-integration.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let facilityData = null;
+        let currentWeekOffset = -1;
+        let currentMonthOffset = -1;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 대시보드 초기화 시작...');
+            
+            const googleData = await loadGoogleSheetData();
+            
+            if (googleData && googleData.facilityRequests.length > 0) {
+                console.log('✅ 구글 시트 데이터 로드 성공:', googleData.facilityRequests.length + '건');
+                facilityData = googleData;
+                
+                document.getElementById('dataSource').innerHTML = `
+                    <i class="fas fa-check-circle" style="color: #38ef7d;"></i>
+                    <span>구글 시트 연동: ${googleData.facilityRequests.length}건</span>
+                `;
+            } else {
+                console.error('❌ 데이터 로드 실패');
+                document.getElementById('dataSource').innerHTML = `
+                    <i class="fas fa-times-circle" style="color: #ff6b6b;"></i>
+                    <span>데이터 로드 실패</span>
+                `;
+                return;
+            }
+            
+            setYesterday();
+            updateWeekDisplay();
+            updateMonthRangeDisplay();
+            updateAllStats();
+            createAllCharts();
+            setupAutoRefresh(5);
+            
+            console.log('✅ 대시보드 초기화 완료');
+        });
+
+        async function refreshData() {
+            console.log('🔄 데이터 새로고침...');
+            const refreshIcon = document.querySelector('.refresh-btn i');
+            refreshIcon.style.transform = 'rotate(360deg)';
+            refreshIcon.style.transition = 'transform 0.5s';
+            
+            const googleData = await loadGoogleSheetData();
+            
+            if (googleData && googleData.facilityRequests.length > 0) {
+                facilityData = googleData;
+                updateAllStats();
+                createAllCharts();
+                console.log('✅ 새로고침 완료');
+            }
+            
+            setTimeout(() => {
+                refreshIcon.style.transform = 'rotate(0deg)';
+            }, 500);
+        }
+    </script>
+</body>
+</html>
