@@ -3,235 +3,1456 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>아인병원 AIN365 시설관리 대시보드</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <title>AIN365 - 아인병원 시설관리 통합시스템</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+            --bg-light: #f8fafc;
+            --bg-dark: #0f172a;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .time-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        .refresh-btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .refresh-btn.loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            background: white;
+            box-shadow: var(--shadow);
+            margin: 2rem auto;
+            max-width: 1400px;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .tabs-container {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1.25rem 2rem;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-light);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-light);
+            color: var(--primary-color);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            background: var(--bg-light);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary-color);
+        }
+
+        .tab-btn i {
+            font-size: 1.25rem;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem 2rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .stat-icon.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .stat-icon.green { background: linear-gradient(135deg, #10b981, #059669); }
+        .stat-icon.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .stat-icon.red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        /* Chart Section */
+        .chart-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .chart-filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .chart-wrapper {
+            height: 400px;
+            position: relative;
+        }
+
+        /* Data Table */
+        .data-table-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            width: 300px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .search-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .search-btn:hover {
+            background: var(--secondary-color);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table thead {
+            background: var(--bg-light);
+        }
+
+        .data-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table tbody tr {
+            transition: background 0.2s;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--bg-light);
+        }
+
+        .status-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-badge.normal { background: #dbeafe; color: #1e40af; }
+        .status-badge.warning { background: #fef3c7; color: #92400e; }
+        .status-badge.danger { background: #fee2e2; color: #991b1b; }
+        .status-badge.success { background: #d1fae5; color: #065f46; }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Welcome Section */
+        .welcome-section {
+            background: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .welcome-icon {
+            font-size: 5rem;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+        }
+
+        .welcome-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            padding: 2rem;
+            border: 2px solid var(--border-color);
+            border-radius: 1rem;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-desc {
+            color: var(--text-light);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 0 1.5rem 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+
+            .chart-wrapper {
+                height: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .header-info {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .tabs-container {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .tab-btn.active::after {
+                bottom: 0;
+                height: 100%;
+                width: 4px;
+                left: 0;
+                right: auto;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .chart-wrapper {
+                height: 300px;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+
+            .data-table-container {
+                padding: 1rem;
+            }
+
+            .data-table {
+                font-size: 0.85rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .welcome-section {
+                padding: 2rem 1rem;
+            }
+
+            .welcome-title {
+                font-size: 1.75rem;
+            }
+
+            .welcome-subtitle {
+                font-size: 1rem;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 1.25rem;
+            }
+
+            .logo i {
+                font-size: 1.5rem;
+            }
+
+            .container {
+                padding: 0 1rem 1rem;
+            }
+
+            .stat-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .stat-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.75rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+        }
+    </style>
 </head>
 <body>
-    <header class="dashboard-header">
-        <div class="container">
-            <h1><i class="fas fa-hospital"></i> 아인병원 AIN365 시설관리</h1>
-            <p id="currentDate"></p>
-            <p id="dataSource" style="margin-top: 10px;">
-                <i class="fas fa-spinner fa-spin"></i> <span>데이터 로딩 중...</span>
-            </p>
-            <button class="refresh-btn" onclick="refreshData()" style="margin-top: 15px;">
-                <i class="fas fa-sync-alt"></i> 새로고침
-            </button>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>데이터를 불러오는 중...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-hospital-alt"></i>
+                <div>
+                    <div>AIN365</div>
+                    <div style="font-size: 0.75rem; font-weight: 400; opacity: 0.9;">아인병원 시설관리 통합시스템</div>
+                </div>
+            </div>
+            <div class="header-info">
+                <div class="time-display">
+                    <i class="far fa-clock"></i>
+                    <span id="currentTime"></span>
+                </div>
+                <button class="refresh-btn" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>데이터 새로고침</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <main class="container">
-        <!-- 메인 통계 -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">전체 요청</div>
-                <div class="stat-number" id="totalRequests">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">완료</div>
-                <div class="stat-number" id="completedRequests" style="color: #38ef7d;">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">진행중</div>
-                <div class="stat-number" id="inProgressRequests" style="color: #ffa502;">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">대기중</div>
-                <div class="stat-number" id="pendingRequests" style="color: #95afc0;">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">긴급 미처리</div>
-                <div class="stat-number" id="urgentRequests" style="color: #ff6348;">0</div>
-            </div>
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('home')">
+                <i class="fas fa-home"></i>
+                <span>홈</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('dashboard')">
+                <i class="fas fa-chart-line"></i>
+                <span>대시보드</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('data1')">
+                <i class="fas fa-clipboard-list"></i>
+                <span>시설 점검 현황</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('data2')">
+                <i class="fas fa-tools"></i>
+                <span>유지보수 내역</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('data3')">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>안전점검 현황</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('data4')">
+                <i class="fas fa-wrench"></i>
+                <span>설비 관리</span>
+            </button>
         </div>
+    </div>
 
-        <!-- 일일 통계 -->
-        <section class="charts-section">
-            <div class="section-header">
-                <h2><i class="fas fa-calendar-day"></i> 일일 통계</h2>
-                <input type="date" id="selectedDate" onchange="updateDailyStats(); createDailyChart();">
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
-                <div class="stat-card">
-                    <div class="stat-label">총 요청</div>
-                    <div class="stat-number" id="dailyTotal">0</div>
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Home Tab -->
+        <div class="tab-content active" id="homeTab">
+            <div class="welcome-section">
+                <div class="welcome-icon">
+                    <i class="fas fa-hospital-alt"></i>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">완료</div>
-                    <div class="stat-number" id="dailyCompleted" style="color: #38ef7d;">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">평균 처리시간</div>
-                    <div class="stat-number" id="dailyAvgTime" style="font-size: 1.8em;">0일</div>
-                </div>
-            </div>
-            <div class="chart-container">
-                <canvas id="dailyChart"></canvas>
-            </div>
-        </section>
-
-        <!-- 주간 통계 -->
-        <section class="charts-section">
-            <div class="section-header">
-                <h2><i class="fas fa-calendar-week"></i> 주간 통계</h2>
-                <div class="nav-controls">
-                    <button onclick="prevWeek()"><i class="fas fa-chevron-left"></i></button>
-                    <span id="weekRange" style="min-width: 120px; text-align: center;"></span>
-                    <button onclick="nextWeek()"><i class="fas fa-chevron-right"></i></button>
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
-                <div class="stat-card">
-                    <div class="stat-label">총 요청</div>
-                    <div class="stat-number" id="weeklyTotal">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">완료</div>
-                    <div class="stat-number" id="weeklyCompleted" style="color: #38ef7d;">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">완료율</div>
-                    <div class="stat-number" id="weeklyRate" style="font-size: 1.8em;">0%</div>
-                </div>
-            </div>
-            <div class="chart-container">
-                <canvas id="weeklyChart"></canvas>
-            </div>
-        </section>
-
-        <!-- 월간 통계 -->
-        <section class="charts-section">
-            <div class="section-header">
-                <h2><i class="fas fa-calendar-alt"></i> 월간 통계 (2개월 비교)</h2>
-                <div class="nav-controls">
-                    <button onclick="prevMonth()"><i class="fas fa-chevron-left"></i></button>
-                    <span id="monthRange" style="min-width: 120px; text-align: center;"></span>
-                    <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
-                <div class="stat-card">
-                    <div class="stat-label">첫 번째 달</div>
-                    <div class="stat-number" id="month1Total">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">두 번째 달</div>
-                    <div class="stat-number" id="month2Total">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">변화율</div>
-                    <div class="stat-number" id="monthlyDiff" style="font-size: 1.8em;">0%</div>
-                </div>
-            </div>
-            <div class="chart-container">
-                <canvas id="monthlyChart"></canvas>
-            </div>
-        </section>
-
-        <!-- 장기 미처리 항목 -->
-        <section class="charts-section">
-            <div class="section-header">
-                <h2><i class="fas fa-exclamation-triangle"></i> 장기 미처리 항목 (3일 이상)</h2>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
-                <div class="stat-card">
-                    <div class="stat-label">총 미처리</div>
-                    <div class="stat-number" id="pendingTotal">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">긴급</div>
-                    <div class="stat-number" id="pendingUrgent" style="color: #ff6348;">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">높음</div>
-                    <div class="stat-number" id="pendingHigh" style="color: #ffa502;">0</div>
-                </div>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>요청일</th>
-                        <th>공종</th>
-                        <th>층</th>
-                        <th>접수자</th>
-                        <th>부서</th>
-                        <th>상태</th>
-                        <th>우선순위</th>
-                        <th>지연일수</th>
-                    </tr>
-                </thead>
-                <tbody id="pendingTableBody"></tbody>
-            </table>
-        </section>
-    </main>
-
-    <footer class="dashboard-footer">
-        <div class="container">
-            <p>&copy; 2025 아인병원 AIN365 시설관리. All rights reserved.</p>
-            <p>마지막 업데이트: <span id="lastUpdate"></span></p>
-        </div>
-    </footer>
-
-    <script src="js/google-sheets-integration.js"></script>
-    <script src="js/app.js"></script>
-    <script>
-        let facilityData = null;
-        let currentWeekOffset = -1;
-        let currentMonthOffset = -1;
-
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 대시보드 초기화 시작...');
-            
-            const googleData = await loadGoogleSheetData();
-            
-            if (googleData && googleData.facilityRequests.length > 0) {
-                console.log('✅ 구글 시트 데이터 로드 성공:', googleData.facilityRequests.length + '건');
-                facilityData = googleData;
+                <h1 class="welcome-title">AIN365 시설관리 통합시스템</h1>
+                <p class="welcome-subtitle">아인병원 시설관리팀의 모든 업무를 한 곳에서</p>
                 
-                document.getElementById('dataSource').innerHTML = `
-                    <i class="fas fa-check-circle" style="color: #38ef7d;"></i>
-                    <span>구글 시트 연동: ${googleData.facilityRequests.length}건</span>
-                `;
-            } else {
-                console.error('❌ 데이터 로드 실패');
-                document.getElementById('dataSource').innerHTML = `
-                    <i class="fas fa-times-circle" style="color: #ff6b6b;"></i>
-                    <span>데이터 로드 실패</span>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="feature-title">실시간 대시보드</div>
+                        <p class="feature-desc">모든 시설 현황을 한눈에 확인</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="feature-title">구글 시트 연동</div>
+                        <p class="feature-desc">데이터 자동 동기화</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div class="feature-title">반응형 디자인</div>
+                        <p class="feature-desc">어디서나 접속 가능</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div class="feature-title">스마트 검색</div>
+                        <p class="feature-desc">필요한 정보를 빠르게</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div class="tab-content" id="dashboardTab">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">총 점검 항목</div>
+                        <div class="stat-value" id="totalItems">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">정상</div>
+                        <div class="stat-value" id="normalItems">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">주의</div>
+                        <div class="stat-value" id="warningItems">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">긴급</div>
+                        <div class="stat-value" id="dangerItems">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart 1: Status Distribution -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">
+                        <i class="fas fa-chart-pie"></i> 점검 상태 현황
+                    </h2>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Monthly Trend -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">
+                        <i class="fas fa-chart-line"></i> 월별 점검 추이
+                    </h2>
+                    <div class="chart-filters">
+                        <select class="filter-select" id="monthFilter">
+                            <option value="6">최근 6개월</option>
+                            <option value="12" selected>최근 12개월</option>
+                            <option value="24">최근 24개월</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 3: Category Analysis -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">
+                        <i class="fas fa-chart-bar"></i> 카테고리별 현황
+                    </h2>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Tab 1 -->
+        <div class="tab-content" id="data1Tab">
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h2 class="table-title">
+                        <i class="fas fa-clipboard-list"></i> 시설 점검 현황
+                    </h2>
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="search1" placeholder="검색...">
+                        <button class="search-btn" onclick="searchTable('table1')">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="table1Container"></div>
+            </div>
+        </div>
+
+        <!-- Data Tab 2 -->
+        <div class="tab-content" id="data2Tab">
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h2 class="table-title">
+                        <i class="fas fa-tools"></i> 유지보수 내역
+                    </h2>
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="search2" placeholder="검색...">
+                        <button class="search-btn" onclick="searchTable('table2')">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="table2Container"></div>
+            </div>
+        </div>
+
+        <!-- Data Tab 3 -->
+        <div class="tab-content" id="data3Tab">
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h2 class="table-title">
+                        <i class="fas fa-exclamation-triangle"></i> 안전점검 현황
+                    </h2>
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="search3" placeholder="검색...">
+                        <button class="search-btn" onclick="searchTable('table3')">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="table3Container"></div>
+            </div>
+        </div>
+
+        <!-- Data Tab 4 -->
+        <div class="tab-content" id="data4Tab">
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h2 class="table-title">
+                        <i class="fas fa-wrench"></i> 설비 관리
+                    </h2>
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="search4" placeholder="검색...">
+                        <button class="search-btn" onclick="searchTable('table4')">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="table4Container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // 전역 변수 및 설정
+        // ============================================
+        
+        // 구글 시트 CSV URL 설정
+        // 각 시트를 CSV로 게시하여 URL을 여기에 입력하세요
+        const GOOGLE_SHEETS_CONFIG = {
+            sheet1: '', // 시트1 CSV URL
+            sheet2: '', // 시트2 CSV URL
+            sheet3: '', // 시트3 CSV URL
+            sheet4: ''  // 시트4 CSV URL
+        };
+
+        // 데이터 저장소
+        let allData = {
+            sheet1: [],
+            sheet2: [],
+            sheet3: [],
+            sheet4: []
+        };
+
+        // 차트 객체 저장
+        let charts = {
+            status: null,
+            trend: null,
+            category: null
+        };
+
+        // ============================================
+        // 초기화 함수
+        // ============================================
+        
+        function init() {
+            updateTime();
+            setInterval(updateTime, 1000);
+            loadAllData();
+        }
+
+        // 시간 업데이트
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        // ============================================
+        // 탭 전환
+        // ============================================
+        
+        function switchTab(tabName) {
+            // 모든 탭 버튼과 컨텐츠 비활성화
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 선택된 탭 활성화
+            event.target.closest('.tab-btn').classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // ============================================
+        // 데이터 로드
+        // ============================================
+        
+        async function loadAllData() {
+            showLoading();
+            
+            try {
+                // 데모 데이터 생성 (실제 구글 시트 연동 전까지)
+                await generateDemoData();
+                
+                // 대시보드 업데이트
+                updateDashboard();
+                
+                // 테이블 렌더링
+                renderAllTables();
+                
+                hideLoading();
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                hideLoading();
+                alert('데이터를 불러오는데 실패했습니다.');
+            }
+        }
+
+        // 구글 시트 데이터 로드 (실제 연동용)
+        async function loadGoogleSheetData(url) {
+            if (!url) {
+                return [];
+            }
+            
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                return parseCSV(text);
+            } catch (error) {
+                console.error('구글 시트 로드 실패:', error);
+                return [];
+            }
+        }
+
+        // CSV 파싱
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                const values = lines[i].split(',');
+                const row = {};
+                
+                headers.forEach((header, index) => {
+                    row[header] = values[index] ? values[index].trim() : '';
+                });
+                
+                data.push(row);
+            }
+            
+            return data;
+        }
+
+        // 데모 데이터 생성
+        async function generateDemoData() {
+            // 시설 점검 현황
+            allData.sheet1 = [
+                { id: 1, 시설명: '1층 로비', 점검항목: '조명', 상태: '정상', 점검일: '2024-01-15', 담당자: '김철수' },
+                { id: 2, 시설명: '2층 병동', 점검항목: '소방설비', 상태: '주의', 점검일: '2024-01-14', 담당자: '이영희' },
+                { id: 3, 시설명: '3층 수술실', 점검항목: '공조시설', 상태: '정상', 점검일: '2024-01-13', 담당자: '박민수' },
+                { id: 4, 시설명: '지하1층', 점검항목: '전기시설', 상태: '긴급', 점검일: '2024-01-12', 담당자: '최지원' },
+                { id: 5, 시설명: '외래동', 점검항목: '엘리베이터', 상태: '정상', 점검일: '2024-01-11', 담당자: '정수민' },
+                { id: 6, 시설명: '응급실', 점검항목: '비상전원', 상태: '정상', 점검일: '2024-01-10', 담당자: '김철수' },
+                { id: 7, 시설명: '4층 병동', 점검항목: '배관', 상태: '주의', 점검일: '2024-01-09', 담당자: '이영희' },
+                { id: 8, 시설명: '중앙공급실', 점검항목: '멸균기', 상태: '정상', 점검일: '2024-01-08', 담당자: '박민수' }
+            ];
+
+            // 유지보수 내역
+            allData.sheet2 = [
+                { id: 1, 일자: '2024-01-15', 위치: '2층 병동', 작업내용: '소방설비 점검', 비용: '150,000', 업체: 'ABC소방' },
+                { id: 2, 일자: '2024-01-14', 위치: '지하1층', 작업내용: '전기시설 긴급수리', 비용: '850,000', 업체: '대한전기' },
+                { id: 3, 일자: '2024-01-13', 위치: '외래동', 작업내용: '엘리베이터 정기점검', 비용: '200,000', 업체: '현대엘리베이터' },
+                { id: 4, 일자: '2024-01-12', 위치: '3층 수술실', 작업내용: '공조시설 필터교체', 비용: '450,000', 업체: '삼성공조' },
+                { id: 5, 일자: '2024-01-11', 위치: '1층 로비', 작업내용: 'LED 조명 교체', 비용: '320,000', 업체: '자체' }
+            ];
+
+            // 안전점검 현황
+            allData.sheet3 = [
+                { id: 1, 점검구분: '화재예방', 위치: '전층', 결과: '양호', 점검일: '2024-01-15', 비고: '정기점검' },
+                { id: 2, 점검구분: '전기안전', 위치: '지하1층', 결과: '불량', 점검일: '2024-01-14', 비고: '긴급조치 필요' },
+                { id: 3, 점검구분: '가스안전', 위치: '중앙공급실', 결과: '양호', 점검일: '2024-01-13', 비고: '이상없음' },
+                { id: 4, 점검구분: '승강기안전', 위치: '외래동', 결과: '양호', 점검일: '2024-01-12', 비고: '정기점검' },
+                { id: 5, 점검구분: '비상구안전', 위치: '전층', 결과: '보통', 점검일: '2024-01-11', 비고: '경미한 개선사항' }
+            ];
+
+            // 설비 관리
+            allData.sheet4 = [
+                { id: 1, 설비명: 'MRI 장비', 위치: '3층 영상의학과', 상태: '정상', 다음점검일: '2024-02-15', 담당업체: '지멘스' },
+                { id: 2, 설비명: '중앙공조시스템', 위치: '옥상', 상태: '정상', 다음점검일: '2024-02-10', 담당업체: '삼성공조' },
+                { id: 3, 설비명: '발전기', 위치: '지하1층', 상태: '주의', 다음점검일: '2024-01-20', 담당업체: '대한발전' },
+                { id: 4, 설비명: '정수시스템', 위치: '지하2층', 상태: '정상', 다음점검일: '2024-02-05', 담당업체: '워터텍' },
+                { id: 5, 설비명: '의료가스설비', 위치: '전층', 상태: '정상', 다음점검일: '2024-02-01', 담당업체: '메디가스' }
+            ];
+        }
+
+        // ============================================
+        // 대시보드 업데이트
+        // ============================================
+        
+        function updateDashboard() {
+            updateStats();
+            renderCharts();
+        }
+
+        // 통계 업데이트
+        function updateStats() {
+            const data = allData.sheet1;
+            
+            const total = data.length;
+            const normal = data.filter(item => item.상태 === '정상').length;
+            const warning = data.filter(item => item.상태 === '주의').length;
+            const danger = data.filter(item => item.상태 === '긴급').length;
+            
+            animateValue('totalItems', 0, total, 1000);
+            animateValue('normalItems', 0, normal, 1000);
+            animateValue('warningItems', 0, warning, 1000);
+            animateValue('dangerItems', 0, danger, 1000);
+        }
+
+        // 숫자 애니메이션
+        function animateValue(id, start, end, duration) {
+            const element = document.getElementById(id);
+            const range = end - start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                element.textContent = current;
+                if (current === end) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        // 차트 렌더링
+        function renderCharts() {
+            renderStatusChart();
+            renderTrendChart();
+            renderCategoryChart();
+        }
+
+        // 상태 분포 차트
+        function renderStatusChart() {
+            const ctx = document.getElementById('statusChart');
+            if (!ctx) return;
+            
+            const data = allData.sheet1;
+            const statusCount = {
+                정상: data.filter(item => item.상태 === '정상').length,
+                주의: data.filter(item => item.상태 === '주의').length,
+                긴급: data.filter(item => item.상태 === '긴급').length
+            };
+            
+            if (charts.status) {
+                charts.status.destroy();
+            }
+            
+            charts.status = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['정상', '주의', '긴급'],
+                    datasets: [{
+                        data: [statusCount.정상, statusCount.주의, statusCount.긴급],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14,
+                                    family: "'Noto Sans KR', sans-serif"
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value}건 (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 월별 추이 차트
+        function renderTrendChart() {
+            const ctx = document.getElementById('trendChart');
+            if (!ctx) return;
+            
+            // 데모 데이터 (월별)
+            const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+            const normalData = [45, 48, 52, 49, 55, 58, 54, 57, 60, 62, 59, 63];
+            const warningData = [8, 7, 6, 9, 5, 6, 7, 5, 4, 3, 5, 4];
+            const dangerData = [2, 3, 1, 2, 1, 0, 2, 1, 1, 0, 1, 1];
+            
+            if (charts.trend) {
+                charts.trend.destroy();
+            }
+            
+            charts.trend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: '정상',
+                            data: normalData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: '주의',
+                            data: warningData,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: '긴급',
+                            data: dangerData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14,
+                                    family: "'Noto Sans KR', sans-serif"
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    family: "'Noto Sans KR', sans-serif"
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    family: "'Noto Sans KR', sans-serif"
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 카테고리별 차트
+        function renderCategoryChart() {
+            const ctx = document.getElementById('categoryChart');
+            if (!ctx) return;
+            
+            const data = allData.sheet1;
+            const categories = {};
+            
+            data.forEach(item => {
+                if (!categories[item.점검항목]) {
+                    categories[item.점검항목] = 0;
+                }
+                categories[item.점검항목]++;
+            });
+            
+            if (charts.category) {
+                charts.category.destroy();
+            }
+            
+            charts.category = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{
+                        label: '점검 건수',
+                        data: Object.values(categories),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    family: "'Noto Sans KR', sans-serif"
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    family: "'Noto Sans KR', sans-serif"
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============================================
+        // 테이블 렌더링
+        // ============================================
+        
+        function renderAllTables() {
+            renderTable('table1', allData.sheet1);
+            renderTable('table2', allData.sheet2);
+            renderTable('table3', allData.sheet3);
+            renderTable('table4', allData.sheet4);
+        }
+
+        function renderTable(tableId, data) {
+            const container = document.getElementById(tableId + 'Container');
+            if (!container) return;
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>데이터가 없습니다.</p>
+                    </div>
                 `;
                 return;
             }
             
-            setYesterday();
-            updateWeekDisplay();
-            updateMonthRangeDisplay();
-            updateAllStats();
-            createAllCharts();
-            setupAutoRefresh(5);
+            const headers = Object.keys(data[0]);
             
-            console.log('✅ 대시보드 초기화 완료');
-        });
+            let html = '<table class="data-table"><thead><tr>';
+            headers.forEach(header => {
+                if (header !== 'id') {
+                    html += `<th>${header}</th>`;
+                }
+            });
+            html += '</tr></thead><tbody>';
+            
+            data.forEach(row => {
+                html += '<tr>';
+                headers.forEach(header => {
+                    if (header !== 'id') {
+                        let value = row[header];
+                        
+                        // 상태 및 결과에 대한 배지 적용
+                        if (header === '상태') {
+                            const badgeClass = value === '정상' ? 'success' : 
+                                              value === '주의' ? 'warning' : 'danger';
+                            value = `<span class="status-badge ${badgeClass}">${value}</span>`;
+                        } else if (header === '결과') {
+                            const badgeClass = value === '양호' ? 'success' : 
+                                              value === '보통' ? 'warning' : 'danger';
+                            value = `<span class="status-badge ${badgeClass}">${value}</span>`;
+                        }
+                        
+                        html += `<td>${value}</td>`;
+                    }
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
 
-        async function refreshData() {
-            console.log('🔄 데이터 새로고침...');
-            const refreshIcon = document.querySelector('.refresh-btn i');
-            refreshIcon.style.transform = 'rotate(360deg)';
-            refreshIcon.style.transition = 'transform 0.5s';
+        // 테이블 검색
+        function searchTable(tableId) {
+            const searchInput = document.getElementById('search' + tableId.charAt(tableId.length - 1));
+            const searchTerm = searchInput.value.toLowerCase();
             
-            const googleData = await loadGoogleSheetData();
+            let dataKey = 'sheet' + tableId.charAt(tableId.length - 1);
+            let filteredData = allData[dataKey];
             
-            if (googleData && googleData.facilityRequests.length > 0) {
-                facilityData = googleData;
-                updateAllStats();
-                createAllCharts();
-                console.log('✅ 새로고침 완료');
+            if (searchTerm) {
+                filteredData = filteredData.filter(row => {
+                    return Object.values(row).some(value => 
+                        String(value).toLowerCase().includes(searchTerm)
+                    );
+                });
             }
             
-            setTimeout(() => {
-                refreshIcon.style.transform = 'rotate(0deg)';
-            }, 500);
+            renderTable(tableId, filteredData);
         }
+
+        // Enter 키로 검색
+        document.addEventListener('DOMContentLoaded', function() {
+            ['search1', 'search2', 'search3', 'search4'].forEach((id, index) => {
+                const searchInput = document.getElementById(id);
+                if (searchInput) {
+                    searchInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            searchTable('table' + (index + 1));
+                        }
+                    });
+                }
+            });
+        });
+
+        // ============================================
+        // 유틸리티 함수
+        // ============================================
+        
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
+
+        function refreshData() {
+            const btn = document.querySelector('.refresh-btn');
+            btn.classList.add('loading');
+            
+            loadAllData().then(() => {
+                btn.classList.remove('loading');
+            });
+        }
+
+        // ============================================
+        // 초기화 실행
+        // ============================================
+        
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
